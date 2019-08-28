@@ -10,14 +10,14 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
  */
 
-namespace Hyperf\SwooleEnterprise\Middleware;
+namespace Hyperf\SwooleTracker\Middleware;
 
 use Hyperf\Contract\ConfigInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use StatsCenter;
+use Tracker\Stats;
 
 class HttpServerMiddleware implements MiddlewareInterface
 {
@@ -33,16 +33,16 @@ class HttpServerMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (class_exists(StatsCenter::class)) {
+        if (class_exists(Stats::class)) {
             $path = $request->getUri()->getPath();
             $ip = current(swoole_get_local_ip());
 
-            $tick = StatsCenter::beforeExecRpc($path, $this->name, $ip);
+            $tick = Stats::beforeExecRpc($path, $this->name, $ip);
             try {
                 $response = $handler->handle($request);
-                StatsCenter::afterExecRpc($tick, true, $response->getStatusCode());
+                Stats::afterExecRpc($tick, true, $response->getStatusCode());
             } catch (\Throwable $exception) {
-                StatsCenter::afterExecRpc($tick, false, $exception->getCode());
+                Stats::afterExecRpc($tick, false, $exception->getCode());
                 throw $exception;
             }
         } else {
